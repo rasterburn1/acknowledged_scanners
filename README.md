@@ -27,12 +27,3 @@ At this time, a list of approximately 40 known scanners and their observed IP ad
 - A list of IP addresses, broken down by scanners
 
 This is a first release
-
-## What will the repository contain?
-Future versions will include information on when addresses were seen and scanner behaviors. 
-
-## Who should I contact about this?
-
-Michael Collins, mcollins AT isi.edu
-
-This research was developed with funding from the Defense Advanced Research Projects Agency (DARPA). The views, opinions and/or findings expressed are those of the author and should not be interpreted as representing the official views or policies of the Department of Defense or the U.S. Government.
