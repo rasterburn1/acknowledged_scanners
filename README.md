@@ -11,6 +11,7 @@ This repository tracks the ip addresses of not only scanners which, are assumed 
 - Providing a service based on their scan data, such as a search engine, threat intelligence, or another security or networking quality product.
 - Engaging with the research community by providing data in published papers, reports, etc. 
 - Providing an opt-out.
+
 The Bad Actors interact with the larger world in a number of other ways, including:
 - Using exploits to gain access to services.
 - Attempting to log in to available services.
