@@ -25,5 +25,7 @@ At this time, a list of approximately 40 known scanners and their observed IP ad
 - The ''orgs.csv'' file contains a list of the organizations
 - A utility, 'asutil.py' which will create lists of acknowledged scanner ips
 - A list of IP addresses, broken down by scanners
+- Each scanners IP (IPv4 and IPv6 where applicable) address list individually formatted for use (as a direct "restore" file) with ipset
+- A complete (IPv4 and IPv6) list formatted for use (as a direct "restore" file) with ipset
 
 This is a first release
