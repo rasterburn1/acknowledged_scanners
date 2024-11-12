@@ -1,0 +1,8 @@
+create isi.edu hash:net family inet counters
+add isi.edu 128.9.29.128/32
+add isi.edu 128.9.29.254/32
+add isi.edu 128.9.63.138/32
+add isi.edu 192.228.79.250/32
+add isi.edu 195.169.125.250/32
+add isi.edu 199.9.14.250/32
+add isi.edu 199.9.15.250/32

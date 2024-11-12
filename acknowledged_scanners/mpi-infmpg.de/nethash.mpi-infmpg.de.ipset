@@ -1,0 +1,21 @@
+create mpi-infmpg.de hash:net family inet counters
+add mpi-infmpg.de 138.246.253.1/32
+add mpi-infmpg.de 138.246.253.2/31
+add mpi-infmpg.de 138.246.253.4/30
+add mpi-infmpg.de 138.246.253.8/29
+add mpi-infmpg.de 138.246.253.16/28
+add mpi-infmpg.de 138.246.253.32/27
+add mpi-infmpg.de 138.246.253.64/26
+add mpi-infmpg.de 138.246.253.128/26
+add mpi-infmpg.de 138.246.253.192/27
+add mpi-infmpg.de 138.246.253.224/28
+add mpi-infmpg.de 138.246.253.240/29
+add mpi-infmpg.de 138.246.253.248/30
+add mpi-infmpg.de 138.246.253.252/31
+add mpi-infmpg.de 138.246.253.254/32
+add mpi-infmpg.de 139.19.117.192/27
+add mpi-infmpg.de 139.19.117.224/28
+add mpi-infmpg.de 139.19.117.240/29
+add mpi-infmpg.de 139.19.117.248/30
+add mpi-infmpg.de 139.19.117.252/31
+add mpi-infmpg.de 139.19.117.254/32

@@ -1,0 +1,5 @@
+create internettl.org hash:net family inet counters
+add internettl.org 104.152.52.21/32
+add internettl.org 104.152.52.22/31
+add internettl.org 104.152.52.24/29
+add internettl.org 104.152.52.32/29

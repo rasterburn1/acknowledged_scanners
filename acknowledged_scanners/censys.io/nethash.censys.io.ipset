@@ -1,0 +1,10 @@
+create censys.io hash:net family inet counters
+add censys.io 74.120.14.0/24
+add censys.io 162.142.125.0/24
+add censys.io 167.94.138.0/24
+add censys.io 167.94.145.0/24
+add censys.io 167.94.146.0/24
+add censys.io 167.248.133.0/24
+add censys.io 192.35.168.0/23
+add censys.io 198.108.66.0/23
+add censys.io 199.45.154.0/23

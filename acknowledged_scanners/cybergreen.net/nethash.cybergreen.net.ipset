@@ -1,0 +1,4 @@
+create cybergreen.net hash:net family inet counters
+add cybergreen.net 52.73.169.169/32
+add cybergreen.net 52.211.122.16/32
+add cybergreen.net 54.249.206.188/32

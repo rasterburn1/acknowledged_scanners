@@ -1,0 +1,8 @@
+create intrinsec.com hash:net family inet counters
+add intrinsec.com 46.105.132.32/27
+add intrinsec.com 51.38.12.12/30
+add intrinsec.com 51.38.12.20/30
+add intrinsec.com 51.254.59.112/28
+add intrinsec.com 164.132.91.0/30
+add intrinsec.com 164.132.91.12/30
+add intrinsec.com 213.32.122.80/28

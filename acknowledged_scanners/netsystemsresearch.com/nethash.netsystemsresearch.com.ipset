@@ -1,0 +1,5 @@
+create netsystemsresearch.com hash:net family inet counters
+add netsystemsresearch.com 92.118.160.0/23
+add netsystemsresearch.com 102.165.30.0/24
+add netsystemsresearch.com 185.173.35.0/24
+add netsystemsresearch.com 196.52.43.0/24

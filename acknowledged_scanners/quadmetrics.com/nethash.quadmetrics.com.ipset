@@ -1,0 +1,4 @@
+create quadmetrics.com hash:net family inet counters
+add quadmetrics.com 71.6.232.4/30
+add quadmetrics.com 71.6.232.8/31
+add quadmetrics.com 209.126.136.3/32

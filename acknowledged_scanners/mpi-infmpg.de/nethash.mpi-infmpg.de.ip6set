@@ -1,0 +1,3 @@
+create mpi-infmpg.de-ipv6 hash:net family inet6 counters
+add mpi-infmpg.de-ipv6 2a02:d480:4c0:10d4::/64
+add mpi-infmpg.de-ipv6 2001:4ca0:108:42::/64

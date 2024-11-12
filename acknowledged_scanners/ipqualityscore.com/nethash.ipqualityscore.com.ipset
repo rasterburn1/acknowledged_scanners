@@ -1,0 +1,3 @@
+create ipqualityscore.com hash:net family inet counters
+add ipqualityscore.com 78.46.37.216/32
+add ipqualityscore.com 192.158.238.225/32

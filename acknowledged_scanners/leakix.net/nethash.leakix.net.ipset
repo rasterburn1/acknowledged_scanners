@@ -1,0 +1,7 @@
+create leakix.net hash:net family inet counters
+add leakix.net 134.122.112.12/32
+add leakix.net 143.198.136.88/32
+add leakix.net 161.35.86.181/32
+add leakix.net 161.35.188.242/32
+add leakix.net 167.71.13.196/32
+add leakix.net 167.99.133.28/32

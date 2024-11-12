@@ -1,0 +1,8 @@
+create securitytrails.com hash:net family inet counters
+add securitytrails.com 193.3.53.3/32
+add securitytrails.com 193.3.53.4/30
+add securitytrails.com 193.3.53.8/30
+add securitytrails.com 195.230.103.242/31
+add securitytrails.com 195.230.103.244/30
+add securitytrails.com 195.230.103.248/31
+add securitytrails.com 195.230.103.250/32

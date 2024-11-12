@@ -1,0 +1,2 @@
+create stanford.edu hash:net family inet counters
+add stanford.edu 171.67.70.0/23

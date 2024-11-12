@@ -1,0 +1,9 @@
+create alphastrike.io hash:net family inet counters
+add alphastrike.io 45.83.64.0/22
+add alphastrike.io 109.235.58.227/32
+add alphastrike.io 109.235.58.228/30
+add alphastrike.io 109.235.58.232/29
+add alphastrike.io 109.235.58.240/29
+add alphastrike.io 109.235.58.248/30
+add alphastrike.io 109.235.58.252/31
+add alphastrike.io 109.235.58.254/32

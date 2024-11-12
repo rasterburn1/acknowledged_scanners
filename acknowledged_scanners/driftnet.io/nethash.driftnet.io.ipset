@@ -1,0 +1,13 @@
+create driftnet.io hash:net family inet counters
+add driftnet.io 68.183.53.77/32
+add driftnet.io 87.236.176.0/24
+add driftnet.io 104.248.203.191/32
+add driftnet.io 104.248.204.195/32
+add driftnet.io 142.93.191.98/32
+add driftnet.io 157.245.216.203/32
+add driftnet.io 165.22.39.64/32
+add driftnet.io 167.99.209.184/32
+add driftnet.io 188.166.26.88/32
+add driftnet.io 193.163.125.0/24
+add driftnet.io 206.189.7.178/32
+add driftnet.io 209.97.152.248/32

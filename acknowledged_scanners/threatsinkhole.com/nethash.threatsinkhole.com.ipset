@@ -1,0 +1,2 @@
+create threatsinkhole.com hash:net family inet counters
+add threatsinkhole.com 172.105.89.161/32

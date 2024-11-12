@@ -1,0 +1,3 @@
+create censys.io-ipv6 hash:net family inet6 counters
+add censys.io-ipv6 2602:80d:1000:b0cc:e::/80
+add censys.io-ipv6 2620:96:e000:b0cc:e::/80

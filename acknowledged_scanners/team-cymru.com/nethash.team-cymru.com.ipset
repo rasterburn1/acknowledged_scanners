@@ -1,0 +1,4 @@
+create team-cymru.com hash:net family inet counters
+add team-cymru.com 38.229.1.18/32
+add team-cymru.com 38.229.33.47/32
+add team-cymru.com 38.229.33.48/32

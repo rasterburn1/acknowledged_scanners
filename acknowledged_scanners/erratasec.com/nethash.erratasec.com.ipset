@@ -1,0 +1,4 @@
+create erratasec.com hash:net family inet counters
+add erratasec.com 209.126.230.71/32
+add erratasec.com 209.126.230.72/30
+add erratasec.com 209.126.230.76/32

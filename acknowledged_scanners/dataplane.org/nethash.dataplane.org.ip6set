@@ -1,0 +1,3 @@
+create dataplane.org-ipv6 hash:net family inet6 counters
+add dataplane.org-ipv6 2607:fae0:f202:44c::143
+add dataplane.org-ipv6 2607:fae0:f202:44c::193

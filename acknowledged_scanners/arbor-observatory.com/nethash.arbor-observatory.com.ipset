@@ -1,0 +1,2 @@
+create arbor-observatory.com hash:net family inet counters
+add arbor-observatory.com 146.88.240.0/24

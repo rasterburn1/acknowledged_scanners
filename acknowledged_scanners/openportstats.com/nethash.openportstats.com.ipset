@@ -1,0 +1,2 @@
+create openportstats.com hash:net family inet counters
+add openportstats.com 185.176.27.0/24
