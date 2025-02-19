@@ -1,0 +1,132 @@
+#!/bin/bash
+# individual_iptable_rules.sh
+
+set -e
+
+scriptversion=2025-02-19.15.53; # CST
+
+# Copyright (C) 2025 - Mike's Tech Repair, All Rights Reserved.
+# author: Michael Martinson
+# contact: michael.martinson@mikestechrepair.com
+
+help() {
+	echo "Usage: $(basename $0)
+
+	...
+	...
+
+	Example: bash $(basename $0)"
+	exit 1
+}
+
+create_tables() {
+	if [[ "$only4" = "yes" ]]; then
+		iptables -N ACKNOWLEDGED_SCANNERS
+		iptables -A INPUT -j ACKNOWLEDGED_SCANNERS
+	elif [[ "$only6" = "yes" ]]; then
+		ip6tables -N ACKNOWLEDGED_SCANNERS
+		ip6tables -A INPUT -j ACKNOWLEDGED_SCANNERS
+	else
+		iptables -N ACKNOWLEDGED_SCANNERS
+		iptables -A INPUT -j ACKNOWLEDGED_SCANNERS
+		ip6tables -N ACKNOWLEDGED_SCANNERS
+		ip6tables -A INPUT -j ACKNOWLEDGED_SCANNERS
+fi
+return 0
+}
+
+IPv4() {
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set alphastrike.io src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set arbor-observatory.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set binaryedge.io src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set bufferover.run src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set caida.org src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set censys.io src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set criminalip.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set cybergreen.net src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set dataplane.org src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set driftnet.io src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set erratasec.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set internet-census.org src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set internettl.org src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set intrinsec.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set inversepath.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set ipip.net src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set ipqualityscore.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set isi.edu src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set leakix.net src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set mpi-infmpg.de src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set ncsc.gov.uk src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set netsystemsresearch.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set onyphe.io src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set openportstats.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set paloaltonetworks.ca src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set quadmetrics.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set rapid7.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set recyber.net src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set scorecardresearch.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set securitytrails.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set shadowserver.org src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set shodan.io src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set spyse.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set stanford.edu src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set stretchoid.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set team-cymru.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set threatsinkhole.com src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set umich.edu src -j DROP
+	iptables -A ACKNOWLEDGED_SCANNERS -m set --match-set unitasglobal.net src -j DROP
+}
+
+IPv6() {
+	ip6tables -A ACKNOWLEDGED_SCANNERS -m set --match-set censys.io-ipv6 src -j DROP
+	ip6tables -A ACKNOWLEDGED_SCANNERS -m set --match-set dataplane.org-ipv6 src -j DROP
+	ip6tables -A ACKNOWLEDGED_SCANNERS -m set --match-set driftnet.io-ipv6 src -j DROP
+	ip6tables -A ACKNOWLEDGED_SCANNERS -m set --match-set mpi-infmpg.de-ipv6 src -j DROP
+}
+
+# Recognise and Pars any command line arguments
+for arg; do
+	delim=""
+	case "$arg" in
+		--only4)					args="${args}-4 " ;;
+		--only6)					args="${args}-6 " ;;
+		--help)					args="${args}-h " ;;
+		*)							[[ "${arg:0:1}" == "-" ]] || delim="\""
+									args="${args}${delim}${arg}${delim} ";;
+	esac
+done
+eval set -- "$args"
+
+# Pars the command line arguments
+while getopts "46h" Option; do
+	case $Option in
+		4) only4="yes" ;;
+		6) only6="yes" ;;
+		h) help ;;
+		*) help ;;
+	esac
+done
+shift "$(($OPTIND -1))"
+
+if [ "$only4" = "yes" ] && [ "$only6" = "yes" ]; then
+	echo "ERROR: If you would like to install both IPv4 and IPv6 filters, do not add cli arguments."
+	exit 1
+fi
+
+create_tables
+if [[ "$only4" = "yes" ]]; then
+	echo "IPv4 Only has been selected"
+	IPv4
+	exit 0
+elif [[ "$only6" = "yes" ]]; then
+	echo "IPv6 Only has been selected"
+	IPv6
+	exit 0
+fi
+
+echo "Neither IPv4 Only or IPv6 Only has been selected, Installing Both sets"
+# install the firewall tables and rules for both iptables and ip6tables
+IPv4
+IPv6
+
+exit 0
