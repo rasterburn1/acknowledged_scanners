@@ -1,0 +1,338 @@
+#!/bin/bash
+# setup
+
+set -e
+
+scriptversion=2025-03-02.14.05; # CST
+
+# Copyright (C) 2025 - Mike's Tech Repair, All Rights Reserved.
+# author: Michael Martinson
+# contact: michael.martinson@mikestechrepair.com
+
+help()
+{
+	echo "Usage: $(basename $0) [OPTIONS]
+Options:
+	-4, --IPv4			Install only the IPv4 firewall rules
+	-6, --IPv6			Install only the IPv6 firewall rules
+	-b, --base-install		Install the base firewall rules
+	-c, --complete-install		Install the base firewall rules and the updated firewall rules
+	-u, --update-existing		Update the existing firewall rules but do not add any new rules
+	-U, --update-complete		Update the existing firewall rules and add any new rules
+	-v, --version			Display the script version
+	-h, --help			Display this help message
+
+Examples:
+	$(basename $0) --base-install
+	$(basename $0) --IPv4 --base-install
+	$(basename $0) --IPv6 --update-complete"
+}
+
+# Configuration functions
+config()
+{
+	# Set the default values for the script
+	IPv4=yes
+	IPv6=yes
+	chain=ACKNOWLEDGED_SCANNERS
+	ipv4_count=0
+	ipv6_count=0
+	entry_count=0
+
+	# Create a temporary directory
+	tmpdir=$(mktemp -d)
+
+	# Check if the netfilter-persistent package is installed
+	if [ -x /sbin/netfilter-persistent ]; then
+		NETFILTER=yes
+	fi
+}
+
+error_check()
+{
+	# Check if the script is being run as root
+	if [ "$(id -u)" -ne 0 ]; then
+		echo "This script must be run as root" 1>&2
+		exit 1
+	fi
+
+	# Check if the script is being run on a Debian based system
+	if [ ! -f /etc/debian_version ]; then
+		echo "This script is only supported on Debian based systems" 1>&2
+		exit 1
+	fi
+
+	# Check if the required packages are installed
+	if [ ! -x /sbin/ipset ]; then
+		echo "Error: The ipset package is required" 1>&2
+		exit 1
+	fi
+
+	if [ ! -x /sbin/iptables ] || [ ! -x /sbin/ip6tables ]; then
+		echo "Error: The iptables package is required" 1>&2
+		exit 1
+	fi
+
+	# Check if the acknowledged_scanners_base directory exists
+	if [ ! -d acknowledged_scanners_base ]; then
+		echo "Error: The acknowledged_scanners_base directory does not exist" 1>&2
+		exit 1
+	else
+		if [ "$INSTALL" = "base" ] || [ "$INSTALL" = "complete" ]; then
+			if [ ! -d acknowledged_scanners_base/ipset_IPv4 ] || [ ! -d acknowledged_scanners_base/ipset_IPv6 ]; then
+				echo "Error: The acknowledged_scanners_base directory is missing the ipset_IPv4 or ipset_IPv6 directory" 1>&2
+				exit 1
+			fi
+			if [ ! -f acknowledged_scanners_base/scanner_list.txt ]; then
+				echo "Error: The acknowledged_scanners_base directory is missing the scanner_list.txt file" 1>&2
+				exit 1
+			fi
+		fi
+	fi
+
+	# Check for any command line arguments
+	if [ "$#" -eq 0 ]; then
+		echo "Error: No command line arguments provided" 1>&2
+		help
+		exit 1
+	fi
+
+	# Check for missing command line arguments
+	if [ -z "$INSTALL" ] && [ -z "$UPDATE" ]; then
+		echo "Error: Base, Complete, Update Existing, or Update Complete is required" 1>&2
+		help
+		exit 1
+	fi
+
+	# Check for any mutually exclusive command line arguments
+	if [ "$IPv4" = "no" ] && [ "$IPv6" = "no" ]; then
+		echo "Error: IPv4 and IPv6 are mutually exclusive" 1>&2
+		exit 1
+	fi
+
+	# Check for any mutually exclusive command line arguments
+	if [ "$INSTALL" = "base" ] && [ "$INSTALL" = "complete" ]; then
+		echo "Error: Base and Complete are mutually exclusive" 1>&2
+		exit 1
+	fi
+
+	# Check for any mutually exclusive command line arguments
+	if [ "$UPDATE" = "existing" ] && [ "$UPDATE" = "complete" ]; then
+		echo "Error: Update Existing and Update Complete are mutually exclusive" 1>&2
+		exit 1
+	fi
+
+	# Check for any incompatible command line arguments
+	if [ -n "$UPDATE" ] && [ -n "$INSTALL" ]; then
+		echo "Error: Update and Install are incompatible" 1>&2
+		exit 1
+	fi
+}
+
+create_chain()
+{
+	if [ ${FUNCNAME[1]} = "IPv4" ]; then
+		if [ -n "$UPDATE" ]; then
+			# Check if the chain already exists in the iptables
+			if iptables -L $chain -n >/dev/null 2>&1; then
+				return
+			else
+				echo "Error: The \"$chain\" chain does not exist, Base or Complete installation is required" 1>&2
+				exit 1
+			fi
+		fi
+
+		# Check if the chain already exists in the iptables
+		if iptables -L $chain -n >/dev/null 2>&1; then
+			return
+		fi
+
+		# Create the chain
+		iptables -N $chain
+
+		# Add the chain to the INPUT chain
+		iptables -I INPUT -j $chain
+	fi
+
+	if [ ${FUNCNAME[1]} = "IPv6" ]; then
+		if [ -n "$UPDATE" ]; then
+			# Check if the chain already exists in the ip6tables
+			if ip6tables -L $chain -n >/dev/null 2>&1; then
+				return
+			else
+				echo "Error: The \"$chain\" chain does not exist, Base or Complete installation is required" 1>&2
+				exit 1
+			fi
+		fi
+
+		if [ "$IPv6" = "yes" ]; then
+			# Check if the chain already exists in the ip6tables
+			if ip6tables -L $chain -n >/dev/null 2>&1; then
+				return
+			fi
+
+			# Create the chain
+			ip6tables -N $chain
+
+			# Add the chain to the INPUT chain
+			ip6tables -I INPUT -j $chain
+		fi
+	fi
+}
+
+base_install()
+{
+	if [ "${FUNCNAME[1]}" = "IPv4" ]; then
+		while read -r line; do
+			has_ipv4=$(echo $line | grep -o "IPv4" || echo "false")
+			if [[ "$has_ipv4" = "IPv4" ]]; then
+				# echo "   $(echo $line | cut -d',' -f1) has IPv4 support."
+				if [ $(ipset list -terse $(echo $line | cut -d',' -f1) 2> /dev/null | grep -c Name) -eq 0 ]; then
+					ipset restore -file acknowledged_scanners_base/ipset_IPv4/nethash.$(echo $line | cut -d',' -f1).ipset
+					iptables -A $chain -m set --match-set $(echo $line | cut -d',' -f1) src -j DROP
+					echo "   $(echo $line | cut -d',' -f1) has been added to the firewall."
+					ipv4_count=$(($ipv4_count + 1))
+					entry_count=$(( $entry_count + $(grep -cv create acknowledged_scanners_base/ipset_IPv4/nethash.$(echo $line | cut -d',' -f1).ipset) ))
+				else
+					printf "      $(echo $line | cut -d',' -f1) is already in the firewall, Checking if it is referenced..."
+					if [ $(ipset list -terse $(echo $line | cut -d',' -f1) 2> /dev/null | grep References | cut -d' ' -f2) -eq 0 ]; then
+						echo "   No references found, adding to the firewall."
+						iptables -A $chain -m set --match-set $(echo $line | cut -d',' -f1) src -j DROP
+					else
+						echo "   References found, not adding to the firewall."
+					fi
+				fi
+			fi
+		done < acknowledged_scanners_base/scanner_list.txt
+	fi
+
+	if [ "${FUNCNAME[1]}" = "IPv6" ]; then
+		while read -r line; do
+			has_ipv6=$(echo $line | grep -o "IPv6" || echo "false")
+			if [[ "$has_ipv6" = "IPv6" ]]; then
+				# echo "   $(echo $line | cut -d',' -f1) has IPv6 support."
+				if [ $(ipset list -terse $(echo $line | cut -d',' -f1)-ipv6 2> /dev/null | grep -c Name) -eq 0 ]; then
+					ipset restore -file acknowledged_scanners_base/ipset_IPv6/nethash.$(echo $line | cut -d',' -f1).ip6set
+					ip6tables -A $chain -m set --match-set $(echo $line | cut -d',' -f1)-ipv6 src -j DROP
+					echo "   $(echo $line | cut -d',' -f1)-ipv6 has been added to the firewall."
+					ipv6_count=$(( $ipv6_count + 1 ))
+					entry_count=$(( $entry_count + $(grep -cv create acknowledged_scanners_base/ipset_IPv6/nethash.$(echo $line | cut -d',' -f1).ip6set) ))
+				else
+					printf "      $(echo $line | cut -d',' -f1)-ipv6 is already in the firewall, Checking if it is referenced..."
+					if [ $(ipset list -terse $(echo $line | cut -d',' -f1)-ipv6 2> /dev/null | grep References | cut -d' ' -f2) -eq 0 ]; then
+						echo "   No references found, adding to the firewall."
+						ip6tables -A $chain -m set --match-set $(echo $line | cut -d',' -f1)-ipv6 src -j DROP
+					else
+						echo "   References found, not adding to the firewall."
+					fi
+				fi
+			fi
+		done < acknowledged_scanners_base/scanner_list.txt
+	fi
+}
+
+update_existing()
+{
+	:
+}
+
+update_complete()
+{
+	:
+}
+
+# Main functions
+IPv4()
+{
+	if [ "$INSTALL" = "base" ] || [ "$INSTALL" = "complete" ]; then
+		echo "Setting up the IPv4 firewall rules..."
+		# Create the chain
+		create_chain
+		# Install the base firewall rules
+		base_install
+	fi
+	echo
+}
+
+IPv6()
+{
+	if	[ "$INSTALL" = "base" ] || [ "$INSTALL" = "complete" ]; then
+		echo "Setting up the IPv6 firewall rules..."
+		# Create the chain
+		create_chain
+		# Install the base firewall rules
+		base_install
+	fi
+	echo
+}
+
+# Run the config function
+config
+
+# Recognise and Pars any command line arguments
+for arg; do
+	delim=""
+	case "$arg" in
+		--IPv4)					args="${args}-4 " ;;
+		--IPv6)					args="${args}-6 " ;;
+		--base-install)					args="${args}-b " ;;
+		--complete-install)					args="${args}-c " ;;
+		--update-existing)					args="${args}-u " ;;
+		--update-complete)					args="${args}-U " ;;
+		--version)					args="${args}-v " ;;
+		--help)					args="${args}-h " ;;
+		*)							[[ "${arg:0:1}" == "-" ]] || delim="\""
+									args="${args}${delim}${arg}${delim} ";;
+	esac
+done
+eval set -- "$args"
+
+# Pars the command line arguments
+while getopts "46bcUuvh" Option; do
+	case $Option in
+		4) IPv6=no ;;
+		6) IPv4=no ;;
+		b) INSTALL=base ;;
+		c) INSTALL=complete ;;
+		u) UPDATE=existing ;;
+		U) UPDATE=complete ;;
+		v)
+			echo "$scriptversion"
+			exit 0 ;;
+		h) help ;;
+		*) help ;;
+	esac
+done
+# shift "$(($OPTIND -1))"
+
+# Check for any errors
+error_check "$@"
+
+if [ "$NETFILTER" = "yes" ]; then
+	# Save the firewall rules
+	netfilter-persistent save
+else
+	# Check if the iptables-persistent package is installed
+	if [ -x /sbin/iptables-save ] && [ -x /sbin/ip6tables-save ]; then
+		# Save the firewall rules
+		/sbin/iptables-save > $tmpdir/rules.v4
+		/sbin/ip6tables-save > $tmpdir/rules.v6
+	fi
+fi
+
+# Run the main functions
+if [ "$IPv4" = "yes" ]; then
+	IPv4
+fi
+
+if [ "$IPv6" = "yes" ]; then
+	IPv6
+fi
+
+if [ $ipv4_count -gt 0 ] || [ $ipv6_count -gt 0 ]; then
+	echo "The firewall has been updated."
+	echo "   $ipv4_count IPv4 sets and $ipv6_count IPv6 sets have been added to the firewall."
+	echo "   $entry_count total entries have been added to the firewall."
+fi
+
+exit 0
