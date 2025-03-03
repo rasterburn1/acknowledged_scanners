@@ -1,6 +1,7 @@
 #!/bin/bash
 # setup
 
+# set -x
 set -e
 
 scriptversion=2025-03-02.14.05; # CST
@@ -35,6 +36,10 @@ config()
 	IPv4=yes
 	IPv6=yes
 	chain=ACKNOWLEDGED_SCANNERS
+	refchain=INPUT
+	target=DROP
+
+	# Start the counters
 	ipv4_count=0
 	ipv6_count=0
 	entry_count=0
@@ -144,14 +149,19 @@ create_chain()
 
 		# Check if the chain already exists in the iptables
 		if iptables -L $chain -n >/dev/null 2>&1; then
-			return
+			if [ $(iptables -L $chain -n | sed 1q | grep -o "[[:digit:]]\+") -gt 0 ]; then
+				return
+			else
+				iptables -I $refchain -j $chain
+				return
+			fi
 		fi
 
 		# Create the chain
 		iptables -N $chain
 
 		# Add the chain to the INPUT chain
-		iptables -I INPUT -j $chain
+		iptables -I $refchain -j $chain
 	fi
 
 	if [ ${FUNCNAME[1]} = "IPv6" ]; then
@@ -168,14 +178,19 @@ create_chain()
 		if [ "$IPv6" = "yes" ]; then
 			# Check if the chain already exists in the ip6tables
 			if ip6tables -L $chain -n >/dev/null 2>&1; then
-				return
+				if [ $(ip6tables -L $chain -n | sed 1q | grep -o "[[:digit:]]\+") -gt 0 ]; then
+					return
+				else
+					ip6tables -I $refchain -j $chain
+					return
+				fi
 			fi
 
 			# Create the chain
 			ip6tables -N $chain
 
 			# Add the chain to the INPUT chain
-			ip6tables -I INPUT -j $chain
+			ip6tables -I $refchain -j $chain
 		fi
 	fi
 }
@@ -189,7 +204,7 @@ base_install()
 				# echo "   $(echo $line | cut -d',' -f1) has IPv4 support."
 				if [ $(ipset list -terse $(echo $line | cut -d',' -f1) 2> /dev/null | grep -c Name) -eq 0 ]; then
 					ipset restore -file acknowledged_scanners_base/ipset_IPv4/nethash.$(echo $line | cut -d',' -f1).ipset
-					iptables -A $chain -m set --match-set $(echo $line | cut -d',' -f1) src -j DROP
+					iptables -A $chain -m set --match-set $(echo $line | cut -d',' -f1) src -j $target
 					echo "   $(echo $line | cut -d',' -f1) has been added to the firewall."
 					ipv4_count=$(($ipv4_count + 1))
 					entry_count=$(( $entry_count + $(grep -cv create acknowledged_scanners_base/ipset_IPv4/nethash.$(echo $line | cut -d',' -f1).ipset) ))
@@ -197,7 +212,7 @@ base_install()
 					printf "      $(echo $line | cut -d',' -f1) is already in the firewall, Checking if it is referenced..."
 					if [ $(ipset list -terse $(echo $line | cut -d',' -f1) 2> /dev/null | grep References | cut -d' ' -f2) -eq 0 ]; then
 						echo "   No references found, adding to the firewall."
-						iptables -A $chain -m set --match-set $(echo $line | cut -d',' -f1) src -j DROP
+						iptables -A $chain -m set --match-set $(echo $line | cut -d',' -f1) src -j $target
 					else
 						echo "   References found, not adding to the firewall."
 					fi
@@ -213,7 +228,7 @@ base_install()
 				# echo "   $(echo $line | cut -d',' -f1) has IPv6 support."
 				if [ $(ipset list -terse $(echo $line | cut -d',' -f1)-ipv6 2> /dev/null | grep -c Name) -eq 0 ]; then
 					ipset restore -file acknowledged_scanners_base/ipset_IPv6/nethash.$(echo $line | cut -d',' -f1).ip6set
-					ip6tables -A $chain -m set --match-set $(echo $line | cut -d',' -f1)-ipv6 src -j DROP
+					ip6tables -A $chain -m set --match-set $(echo $line | cut -d',' -f1)-ipv6 src -j $target
 					echo "   $(echo $line | cut -d',' -f1)-ipv6 has been added to the firewall."
 					ipv6_count=$(( $ipv6_count + 1 ))
 					entry_count=$(( $entry_count + $(grep -cv create acknowledged_scanners_base/ipset_IPv6/nethash.$(echo $line | cut -d',' -f1).ip6set) ))
@@ -221,7 +236,7 @@ base_install()
 					printf "      $(echo $line | cut -d',' -f1)-ipv6 is already in the firewall, Checking if it is referenced..."
 					if [ $(ipset list -terse $(echo $line | cut -d',' -f1)-ipv6 2> /dev/null | grep References | cut -d' ' -f2) -eq 0 ]; then
 						echo "   No references found, adding to the firewall."
-						ip6tables -A $chain -m set --match-set $(echo $line | cut -d',' -f1)-ipv6 src -j DROP
+						ip6tables -A $chain -m set --match-set $(echo $line | cut -d',' -f1)-ipv6 src -j $target
 					else
 						echo "   References found, not adding to the firewall."
 					fi
